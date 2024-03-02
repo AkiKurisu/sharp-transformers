@@ -1,17 +1,11 @@
-using UnityEngine;
-
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-
-
 namespace TokenizersUtils
 {
     public static class Utils
     {
         public static List<int> Fuse(List<int> arr, int value)
         {
-            List<int> fused = new List<int>();
+            List<int> fused = new();
             int i = 0;
             while (i < arr.Count)
             {

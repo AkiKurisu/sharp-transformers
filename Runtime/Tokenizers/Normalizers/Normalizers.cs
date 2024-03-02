@@ -1,18 +1,9 @@
-using UnityEngine;
-
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
 using HuggingFace.SharpTransformers.NormalizersUtils;
-
-
 namespace HuggingFace.SharpTransformers.Normalizers
 {
     /// <summary>
@@ -202,7 +193,6 @@ namespace HuggingFace.SharpTransformers.Normalizers
     public class NormalizerSequence : Normalizer
     {
         public List<Normalizer> Normalizers;
-        public JObject Config;
 
         /// <summary>
         /// Create a new instance of NormalizerSequence
@@ -210,7 +200,7 @@ namespace HuggingFace.SharpTransformers.Normalizers
         /// <param name="config">The configuration object</param>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ArgumentException"></exception>
-        public NormalizerSequence(JObject config): base(config)
+        public NormalizerSequence(JObject config) : base(config)
         {
             string jsonString = config.ToString();
 
@@ -224,7 +214,7 @@ namespace HuggingFace.SharpTransformers.Normalizers
             }
 
             Normalizers = new List<Normalizer>();
-        
+
             foreach (JObject normalizerConfig in config["normalizers"])
             {
                 var normalizer = Normalizer.FromConfig(normalizerConfig);
@@ -245,7 +235,7 @@ namespace HuggingFace.SharpTransformers.Normalizers
         /// <param name="text">The text to normalize</param>
         /// <returns>The normalized text</returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public string Normalize(string text)
+        public override string Normalize(string text)
         {
             if (text == null)
             {

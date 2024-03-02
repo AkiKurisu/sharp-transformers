@@ -1,21 +1,7 @@
-using UnityEngine;
-
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Linq;
-
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
-using HuggingFace.SharpTransformers.Normalizers;
-using HuggingFace.SharpTransformers.PostProcessors;
-using HuggingFace.SharpTransformers.Decoders;
-using HuggingFace.SharpTransformers.PreTokenizers;
-
-
 namespace HuggingFace.SharpTransformers.Tokenizers
 {
     public abstract class TokenizerModel
@@ -77,13 +63,11 @@ namespace HuggingFace.SharpTransformers.Tokenizers
         public static TokenizerModel FromConfig(JObject config, JObject tokenizerData)
         {
             string configType = config["type"].ToString();
-            switch (configType)
+            return configType switch
             {
-                case "WordPiece":
-                    return new WordPieceTokenizer(config);
-                default:
-                    throw new Exception($"Unknown TokenizerModel type: {configType}");
-            }
+                "WordPiece" => new WordPieceTokenizer(config),
+                _ => throw new Exception($"Unknown TokenizerModel type: {configType}"),
+            };
         }
 
         /// <summary>
@@ -116,13 +100,13 @@ namespace HuggingFace.SharpTransformers.Tokenizers
         public List<int> ConvertTokensToIds(List<string> tokens)
         {
             // Create an array of token IDs by mapping each token to its corresponding ID
-            List<int> ids = new List<int>();
+            List<int> ids = new();
 
             //Debug.Log("Dictionary Contents:");
-            foreach (var kvp in TokensToIds)
-            {
-                Debug.Log($"Key: {kvp.Key}, Value: {kvp.Value}");
-            }
+            // foreach (var kvp in TokensToIds)
+            // {
+            //     Debug.Log($"Key: {kvp.Key}, Value: {kvp.Value}");
+            // }
 
             // token.Select: applies an operation to each token in tokens
             ids = tokens.Select(t => TokensToIds.TryGetValue(t, out int id) ? id : UnknownTokenId).ToList();
@@ -154,39 +138,11 @@ namespace HuggingFace.SharpTransformers.Tokenizers
             List<string> tokens = ids.Select(i => Vocab.Count > i ? Vocab[i] ?? UnkToken : UnkToken).ToList();
             return tokens;
         }
-
-
-        public List<int> Fuse(List<int> arr, int value)
-        {
-            List<int> fused = new List<int>();
-            int i = 0;
-            while (i < arr.Count)
-            {
-                fused.Add(arr[i]);
-                if (arr[i] != value)
-                {
-                    i++;
-                    continue;
-                }
-
-                while (i < arr.Count && arr[i] == value)
-                {
-                    i++;
-                }
-            }
-
-            return fused;
-        }
     }
 
 
     public class WordPieceTokenizer : TokenizerModel
     {
-        public JObject Config;
-        public List<string> Vocab;
-        public Dictionary<string, int> TokensToIds;
-        public int? UnkTokenId; // Thanks to int?, the variable can hold an integer value or be null
-        public string UnkToken;
         public string ContinuingSubwordPrefix;
 
         public WordPieceTokenizer(JObject config) : base(config)
@@ -199,6 +155,7 @@ namespace HuggingFace.SharpTransformers.Tokenizers
 
             // A mapping of tokens to ids.
             TokensToIds = vocabJson.ToObject<Dictionary<string, int>>();
+            Vocab.AddRange(TokensToIds.Keys);
 
             // Id of the unknown token
             UnkTokenId = (int)config["vocab"]["[UNK]"];
@@ -215,7 +172,7 @@ namespace HuggingFace.SharpTransformers.Tokenizers
         /// </summary>
         /// <param name="tokens">The tokens to encode.</param>
         /// <returns>An array of encoded tokens.</returns>
-        public List<string> Encode(List<string> tokens)
+        public override List<string> Encode(List<string> tokens)
         {
             // Initialize a List<string> to store the encoded tokens
             var OutputTokens = new List<string>();
@@ -286,63 +243,6 @@ namespace HuggingFace.SharpTransformers.Tokenizers
             }
             // Return the List<string> of encoded tokens
             return OutputTokens;
-        }
-
-        /// <summary>
-        /// Converts a list of token IDs into a list of tokens.
-        /// </summary>
-        /// <param name="ids">The token IDs to convert.</param>
-        /// <returns>The converted tokens.</returns>
-        public List<string> ConvertIdsToTokens(List<int> ids)
-        {
-            /*
-             Select is used instead of map to transform the list of IDs into a list of tokens.
-            The conditional operator (? :) is used to check if the ID is within the valid range of the vocab array. If it is, the code retrieves the corresponding token using this.vocab[i]. If the token is null, it uses this.unk_token as the default value.
-            The resulting list of tokens is returned.
-            */
-            List<string> tokens = ids.Select(i => Vocab.Count > i ? Vocab[i] ?? UnkToken : UnkToken).ToList();
-            return tokens;
-        }
-
-        public List<int> ConvertTokensToIds(List<string> tokens)
-        {
-            // Create an array of token IDs by mapping each token to its corresponding ID
-            List<int> ids = new List<int>();
-
-            // token.Select: applies an operation to each token in tokens
-            ids = tokens.Select(t => TokensToIds.TryGetValue(t, out int id) ? id : UnknownTokenId).ToList();
-
-
-
-            if (FuseUnk == false)
-            {
-                //ids = Fuse(ids, UnkTokenId);
-                ids = Fuse(ids, UnkTokenId ?? -1);
-            }
-
-            return ids;
-        }
-
-        public List<int> Fuse(List<int> arr, int value)
-        {
-            List<int> fused = new List<int>();
-            int i = 0;
-            while (i < arr.Count)
-            {
-                fused.Add(arr[i]);
-                if (arr[i] != value)
-                {
-                    i++;
-                    continue;
-                }
-
-                while (i < arr.Count && arr[i] == value)
-                {
-                    i++;
-                }
-            }
-
-            return fused;
         }
     }
 }

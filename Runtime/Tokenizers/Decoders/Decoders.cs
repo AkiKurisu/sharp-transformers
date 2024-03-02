@@ -1,18 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Linq;
-
-using UnityEngine;
-
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
 using HuggingFace.SharpTransformers.NormalizersUtils;
-
-
 namespace HuggingFace.SharpTransformers.Decoders
 {
     class Decoder_
@@ -46,15 +37,13 @@ namespace HuggingFace.SharpTransformers.Decoders
         {
             string configType = config["type"].ToString();
 
-            switch (configType)
+            return configType switch
             {
                 /*case "WordPiece":
-                    return new WordPieceDecoder(config);*/
-                case "Sequence":
-                    return new DecoderSequence(config);
-                default:
-                    throw new Exception("Unknown Decoder type");
-            }
+                                    return new WordPieceDecoder(config);*/
+                "Sequence" => new DecoderSequence(config),
+                _ => throw new Exception("Unknown Decoder type"),
+            };
         }
 
 
@@ -168,7 +157,7 @@ namespace HuggingFace.SharpTransformers.Decoders
         }
         public override List<string> DecodeChain(List<string> tokens)
         {
-            string pattern = Utils.createPattern(this.Config["pattern"]);
+            string pattern = Utils.createPattern(Config["pattern"]);
 
             if (pattern == null)
             {
@@ -178,7 +167,7 @@ namespace HuggingFace.SharpTransformers.Decoders
             // Iterate through each token in tokens array. Replacing all occurences of specified pattern
             // with the content defined the configuration and returning a new array with modified tokens.
             // We use LINQ's Select method to transform each element of the tokens list.
-            return tokens.Select(token => token.Replace(pattern, this.Config["content"].Value<string>())).ToList();
+            return tokens.Select(token => token.Replace(pattern, Config["content"].Value<string>())).ToList();
         }
     }
 
@@ -257,7 +246,7 @@ namespace HuggingFace.SharpTransformers.Decoders
 
             return newTokens;
         }
-        
+
     }
 
     /// <summary>
@@ -272,9 +261,9 @@ namespace HuggingFace.SharpTransformers.Decoders
         public StripDecoder(JObject config) : base(config)
         {
 
-            this.content = this.Config["content"].Value<string>();
-            this.start = this.Config["start"].Value<int>(); 
-            this.stop = this.Config["stop"].Value<int>(); 
+            content = Config["content"].Value<string>();
+            start = Config["start"].Value<int>();
+            stop = Config["stop"].Value<int>();
         }
 
         public override List<string> Decode(List<string> tokens)
@@ -313,7 +302,7 @@ namespace HuggingFace.SharpTransformers.Decoders
                 return token.Substring(startCut, stopCut - startCut);
             }).ToList();
         }
-}
+    }
 
 
     /// <summary>
@@ -322,7 +311,6 @@ namespace HuggingFace.SharpTransformers.Decoders
     class DecoderSequence : Decoder_
     {
         public List<Decoder_> Decoders;
-        public JObject Config;
 
         public DecoderSequence(JObject config) : base(config)
         {
@@ -337,10 +325,10 @@ namespace HuggingFace.SharpTransformers.Decoders
 
             Decoders = new List<Decoder_>();
 
-            foreach (JObject decoderConfig in config["decoders"])
+            foreach (JObject decoderConfig in config["decoders"].Cast<JObject>())
             {
-               
-                var decoder = Decoder_.FromConfig(decoderConfig);
+
+                var decoder = FromConfig(decoderConfig);
 
                 if (decoder != null)
                 {
@@ -354,9 +342,9 @@ namespace HuggingFace.SharpTransformers.Decoders
         /// </summary>
         /// <param name="tokens"></param>
         /// <returns></returns>
-        public List<string> DecodeChain(List<string> tokens)
+        public override List<string> DecodeChain(List<string> tokens)
         {
-            return this.Decoders.Aggregate(tokens, (currentTokens, decoder) => decoder.DecodeChain(currentTokens));
+            return Decoders.Aggregate(tokens, (currentTokens, decoder) => decoder.DecodeChain(currentTokens));
         }
     }
 }
