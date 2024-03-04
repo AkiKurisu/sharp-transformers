@@ -1,18 +1,10 @@
-using UnityEngine;
-
 using System;
-using System.Collections;
-using System.Collections.Generic;
-
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
-
 namespace HuggingFace.SharpTransformers.NormalizersUtils
 {
     public static class Utils
     {
-        public static string createPattern(JToken pattern, bool invert = true)
+        public static string CreatePattern(JToken pattern, bool invert = true)
         {
             // Execute when pattern.Regex is defined
             if (pattern["Regex"] != null)
@@ -27,7 +19,6 @@ namespace HuggingFace.SharpTransformers.NormalizersUtils
             else
             {
                 throw new Exception($"Unknown pattern type: {pattern}");
-                return null;
             }
         }
     }

@@ -293,7 +293,7 @@ namespace HuggingFace.SharpTransformers.Normalizers
         /// <returns>The normalized text after replacing the pattern with the content.</returns>
         public override string Normalize(string text)
         {
-            string pattern = Utils.createPattern(this.Config["pattern"]);
+            string pattern = Utils.CreatePattern(this.Config["pattern"]);
 
             if (pattern == null)
             {

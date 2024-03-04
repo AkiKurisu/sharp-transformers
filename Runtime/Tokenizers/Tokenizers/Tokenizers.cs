@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 namespace HuggingFace.SharpTransformers.Tokenizers
@@ -165,7 +166,21 @@ namespace HuggingFace.SharpTransformers.Tokenizers
 
             ContinuingSubwordPrefix = (string)config["continuing_subword_prefix"];
         }
-
+        /// <summary>
+        /// Load vocabulary from path (eg. vocab.txt)
+        /// </summary>
+        /// <param name="path"></param>
+        public void LoadVocab(string path)
+        {
+            TokensToIds.Clear();
+            Vocab.Clear();
+            var lines = File.ReadAllLines(path);
+            for (int i = 0; i < lines.Length; ++i)
+            {
+                TokensToIds[lines[i]] = i;
+                Vocab.Add(lines[i]);
+            }
+        }
 
         /// <summary>
         /// Encodes an array of tokens using WordPiece encoding.

@@ -157,7 +157,7 @@ namespace HuggingFace.SharpTransformers.Decoders
         }
         public override List<string> DecodeChain(List<string> tokens)
         {
-            string pattern = Utils.createPattern(Config["pattern"]);
+            string pattern = Utils.CreatePattern(Config["pattern"]);
 
             if (pattern == null)
             {

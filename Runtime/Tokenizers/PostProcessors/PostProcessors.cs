@@ -27,13 +27,11 @@ namespace HuggingFace.SharpTransformers.PostProcessors
 
             string configType = config["type"].ToString();
 
-            switch (configType)
+            return configType switch
             {
-                case "TemplateProcessing":
-                    return new TemplateProcessing(config);
-                default:
-                    throw new Exception("Unknown PostProcessor type");
-            }
+                "TemplateProcessing" => new TemplateProcessing(config),
+                _ => throw new Exception("Unknown PostProcessor type"),
+            };
         }
 
 
@@ -95,7 +93,7 @@ namespace HuggingFace.SharpTransformers.PostProcessors
             JArray Type = tokensPair == null ? Single : Pair;
 
             // Create an empty List<string> to store the resulting tokens after processing
-            List<string> ToReturn = new List<string>();
+            List<string> ToReturn = new();
 
             // The function iterates over each item in the Type List
             foreach (JToken item in Type)

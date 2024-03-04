@@ -1,16 +1,8 @@
-using UnityEngine;
-
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
-
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
-
 namespace HuggingFace.SharpTransformers.PreTokenizers
 {
     /// <summary>
@@ -39,14 +31,11 @@ namespace HuggingFace.SharpTransformers.PreTokenizers
                 return null;
 
             string configType = config["type"].ToString();
-            switch (configType)
+            return configType switch
             {
-
-                case "BertPreTokenizer":
-                    return new BertPreTokenizer(config);
-                default:
-                    throw new Exception($"Unknown PreTokenizer type: {configType}");
-            }
+                "BertPreTokenizer" => new BertPreTokenizer(config),
+                _ => throw new Exception($"Unknown PreTokenizer type: {configType}"),
+            };
         }
 
         /// <summary>
@@ -68,7 +57,7 @@ namespace HuggingFace.SharpTransformers.PreTokenizers
         public List<string> PreTokenize(object text)
         {
 
-            List<string> result = new List<string>();
+            List<string> result = new();
 
             if (text is string textString)
             {
@@ -119,7 +108,7 @@ namespace HuggingFace.SharpTransformers.PreTokenizers
             // https://github.com/huggingface/tokenizers/blob/b4fcc9ce6e4ad5806e82826f816acfdfdc4fcc67/tokenizers/src/pre_tokenizers/bert.rs#L11
             // Equivalent to removing whitespace and splitting on punctuation (both \p{P} and other ASCII characters)
             string punctuationRegex = "\\p{P}";
-            this.pattern = new Regex($"[^\\s{punctuationRegex}]+|[{punctuationRegex}]", RegexOptions.Compiled | RegexOptions.Multiline);
+            pattern = new Regex($"[^\\s{punctuationRegex}]+|[{punctuationRegex}]", RegexOptions.Compiled | RegexOptions.Multiline);
 
         }
 
@@ -132,7 +121,7 @@ namespace HuggingFace.SharpTransformers.PreTokenizers
         /// TODO: See how we can optimize it
         public override List<string> PreTokenizeText(string text)
         {
-            var matches = this.pattern.Matches(text.Trim());
+            var matches = pattern.Matches(text.Trim());
             var tokens = new List<string>();
 
             foreach (Match match in matches)
