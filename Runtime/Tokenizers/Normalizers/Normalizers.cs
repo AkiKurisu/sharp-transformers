@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using HuggingFace.SharpTransformers.NormalizersUtils;
+using System.Linq;
 namespace HuggingFace.SharpTransformers.Normalizers
 {
     /// <summary>
@@ -32,19 +33,14 @@ namespace HuggingFace.SharpTransformers.Normalizers
                 return null;
 
             string configType = config["type"].ToString();
-            switch (configType)
+            return configType switch
             {
-                case "BertNormalizer":
-                    return new BertNormalizer(config);
-                case "Sequence":
-                    return new NormalizerSequence(config);
-                case "Replace":
-                    return new Replace(config);
-                case "Prepend":
-                    return new Prepend(config);
-                default:
-                    throw new Exception($"Unknown Normalizer type: {configType}");
-            }
+                "BertNormalizer" => new BertNormalizer(config),
+                "Sequence" => new NormalizerSequence(config),
+                "Replace" => new Replace(config),
+                "Prepend" => new Prepend(config),
+                _ => throw new Exception($"Unknown Normalizer type: {configType}"),
+            };
         }
 
         /// <summary>
@@ -87,13 +83,13 @@ namespace HuggingFace.SharpTransformers.Normalizers
         public string TokenizeChineseChars(string text)
         {
             // Adds whitespace around any CJK character.
-            StringBuilder output = new StringBuilder();
+            StringBuilder output = new();
 
             for (int i = 0; i < text.Length; i++)
             {
                 char character = text[i];
                 // Used to convert the character to its Unicode code point.
-                int unicodeCodePoint = Char.ConvertToUtf32(character.ToString(), 0);
+                int unicodeCodePoint = char.ConvertToUtf32(character.ToString(), 0);
 
                 if (IsChineseChar(unicodeCodePoint))
                 {
@@ -168,7 +164,7 @@ namespace HuggingFace.SharpTransformers.Normalizers
             bool? handleStripAccentsValue = (bool?)Config["strip_accents"];
 
             if (handleChineseCharsValue == true)
-                text = this.TokenizeChineseChars(text);
+                text = TokenizeChineseChars(text);
 
             if (handleLowercaseValue == true)
             {
@@ -177,12 +173,12 @@ namespace HuggingFace.SharpTransformers.Normalizers
 
                 // If not explicitly set to false == true
                 if (handleStripAccentsValue == null || handleStripAccentsValue == true)
-                    text = this.StripAccents(text);
+                    text = StripAccents(text);
             }
             // If lowercase is false but strip accents is true
             else if (handleLowercaseValue == true)
             {
-                text = this.StripAccents(text);
+                text = StripAccents(text);
             }
             return text;
         }
@@ -202,7 +198,7 @@ namespace HuggingFace.SharpTransformers.Normalizers
         /// <exception cref="ArgumentException"></exception>
         public NormalizerSequence(JObject config) : base(config)
         {
-            string jsonString = config.ToString();
+            //string jsonString = config.ToString();
 
             if (config == null)
             {
@@ -215,9 +211,9 @@ namespace HuggingFace.SharpTransformers.Normalizers
 
             Normalizers = new List<Normalizer>();
 
-            foreach (JObject normalizerConfig in config["normalizers"])
+            foreach (JObject normalizerConfig in config["normalizers"].Cast<JObject>())
             {
-                var normalizer = Normalizer.FromConfig(normalizerConfig);
+                var normalizer = FromConfig(normalizerConfig);
 
                 //var normalizer = new Normalizer.FromConfig(normalizerConfig);
                 if (normalizer != null)
@@ -268,7 +264,7 @@ namespace HuggingFace.SharpTransformers.Normalizers
         /// <returns>The normalized text</returns>
         public override string Normalize(string text)
         {
-            string text_ = this.Config["prepend"].Value<string>() + text;
+            string text_ = Config["prepend"].Value<string>() + text;
             return text_;
         }
     }
@@ -293,14 +289,14 @@ namespace HuggingFace.SharpTransformers.Normalizers
         /// <returns>The normalized text after replacing the pattern with the content.</returns>
         public override string Normalize(string text)
         {
-            string pattern = Utils.CreatePattern(this.Config["pattern"]);
+            string pattern = Utils.CreatePattern(Config["pattern"]);
 
             if (pattern == null)
             {
                 return text;
             }
 
-            text = text.Replace(pattern, this.Config["content"].Value<string>());
+            text = text.Replace(pattern, Config["content"].Value<string>());
 
             return text;
         }
