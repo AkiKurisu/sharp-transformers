@@ -88,9 +88,16 @@ namespace HuggingFace.SharpTransformers.Normalizers
             for (int i = 0; i < text.Length; i++)
             {
                 char character = text[i];
-                // Used to convert the character to its Unicode code point.
-                int unicodeCodePoint = char.ConvertToUtf32(character.ToString(), 0);
-
+                int unicodeCodePoint;
+                try
+                {
+                    // Used to convert the character to its Unicode code point.
+                    unicodeCodePoint = char.ConvertToUtf32(character.ToString(), 0);
+                }
+                catch (ArgumentException)
+                {
+                    continue;
+                }
                 if (IsChineseChar(unicodeCodePoint))
                 {
                     output.Append(" ");
